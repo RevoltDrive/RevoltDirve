@@ -1,126 +1,40 @@
 import { Hono } from "hono";
-
 const app = new Hono();
-
-function json(data, status=200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {"content-type":"application/json; charset=utf-8"}
-  });
+function json(data,status=200){return new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json; charset=utf-8"}})}
+function decodeEntities(s=""){return s.replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&nbsp;/g," ").replace(/&uuml;/g,"ü").replace(/&ouml;/g,"ö").replace(/&auml;/g,"ä").replace(/&Uuml;/g,"Ü").replace(/&Ouml;/g,"Ö").replace(/&Auml;/g,"Ä").replace(/&szlig;/g,"ß")}
+function cleanText(s=""){return decodeEntities(String(s).replace(/\s+/g," ").trim())}
+function absUrl(u,base){try{return new URL(u,base).href}catch{return""}}
+function stripHtml(html=""){return cleanText(html.replace(/<script[\s\S]*?<\/script>/gi," ").replace(/<style[\s\S]*?<\/style>/gi," ").replace(/<[^>]+>/g," "))}
+function firstMatch(text,re){const m=text.match(re);return m?.[1]?cleanText(m[1]):""}
+function parseListing(html,sourceUrl){
+  const text=stripHtml(html),images=[];
+  const pushImg=u=>{u=absUrl(u,sourceUrl);if(u&&!images.includes(u)&&/prod\.pictures\.autoscout24\.net/i.test(u))images.push(u)};
+  for(const m of html.matchAll(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)/gi))pushImg(m[1]);
+  for(const m of html.matchAll(/(?:src|data-src|data-image-url)\s*=\s*["']([^"']+\.(?:jpg|jpeg|png|webp)[^"']*)["']/gi))pushImg(m[1]);
+  for(const m of html.matchAll(/https?:\\?\/\\?\/prod\.pictures\.autoscout24\.net[^"'\\s<>]+/gi))pushImg(m[0].replace(/\\\//g,"/"));
+  const styea=firstMatch(html,/"styea"\s*:\s*"?(\d{4})/i),stmon=firstMatch(html,/"stmon"\s*:\s*"?(\d{1,2})/i),stmil=firstMatch(html,/"stmil"\s*:\s*"?(\d+)/i),stkw=firstMatch(html,/"stkw"\s*:\s*"?(\d+)/i),sthp=firstMatch(html,/"sthp"\s*:\s*"?(\d+)/i),cost=firstMatch(html,/"cost"\s*:\s*"?(\d+(?:\.\d+)?)/i);
+  const year=styea?(stmon?stmon.padStart(2,"0")+"/"+styea:styea):firstMatch(text,/Erstzulassung\s+(\d{2}\/\d{4})/i);
+  const km=stmil||firstMatch(text,/Kilometerstand\s+([\d.]+\s*km)/i).replace(/\s*km/i,"").replace(/\./g,"");
+  const range=firstMatch(text,/Elektrische Reichweite(?:\^\d+)?\s+([\d.]+\s*km)/i).replace(/\s*km/i,"").replace(/\./g,"");
+  const power=stkw?(sthp?stkw+" kW / "+sthp+" k":""):firstMatch(text,/Leistung\s+(\d+\s*kW(?:\s*\(\d+\s*PS\))?)/i);
+  const drive=firstMatch(text,/Antriebsart\s+(Heck|Front|Allrad|Vorderrad|Hinterrad)/i);
+  const color=firstMatch(text,/Außenfarbe\s+([A-Za-zÄÖÜäöüß-]+(?:\s+[A-Za-zÄÖÜäöüß-]+){0,2})\s+Farbe laut Hersteller/i)||firstMatch(text,/Außenfarbe\s+([A-Za-zÄÖÜäöüß-]+)/i);
+  const slug=new URL(sourceUrl).pathname.split("/angebote/")[1]?.split("-cat_")[0]||"";
+  let title=slug?slug.replace(/-elektro-.*$/i,"").replace(/-/g," "):"";
+  if(title)title=title.replace(/\b\w/g,m=>m.toUpperCase()).replace(/Q4 E Tron/i,"Q4 e-tron").replace(/Audi Q4 E-tron/i,"Audi Q4 e-tron");
+  if(!title)title=firstMatch(html,/<h1[^>]*>([\s\S]*?)<\/h1>/i)||"Nové vozidlo";
+  const equipment=[],start=html.search(/Ausstattung/i),end=html.search(/Farbe und Innenausstattung/i);
+  if(start>=0){const section=html.slice(start,end>start?end:Math.min(html.length,start+90000));for(const m of section.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)){const item=cleanText(m[1].replace(/<[^>]+>/g," "));if(item&&item.length<120&&!equipment.includes(item)&&!/^(Kaufen|Verkaufen|Informieren|Mehr anzeigen)$/i.test(item))equipment.push(item)}}
+  const known=["3-Zonen-Klimaautomatik","Einparkhilfe","Navigationssystem","Panoramadach","Sitzheizung","Standheizung","Tempomat","Android Auto","Apple CarPlay","Bluetooth","DAB-Radio","Soundsystem","LED-Scheinwerfer","Spurhalteassistent","Verkehrszeichenerkennung","Alufelgen","Touchscreen","Komfortschlüssel","Panorama Glas Dach","Audi virtual cockpit","MMI Navigation plus","Audi sound system","Audi drive select","On-board-Ladegerät bis 11 kW (AC)","Hochvolt-Batterie 82 kWh (brutto)","Heckantrieb"];
+  for(const item of known)if(text.toLowerCase().includes(item.toLowerCase())&&!equipment.some(x=>x.toLowerCase()===item.toLowerCase()))equipment.push(item);
+  return {title:cleanText(title),description:firstMatch(html,/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)/i),year,km,power,range_km:range,drive,color,price_eur:cost?Number(cost):null,images:images.slice(0,40),equipment:equipment.slice(0,100),warnings:[images.length?null:"Nepodarilo sa nájsť fotografie automaticky.",title?null:"Nepodarilo sa nájsť názov vozidla.",year&&km&&power?null:"Niektoré technické údaje sa nepodarilo načítať."].filter(Boolean)};
 }
-function cleanText(s="") { return s.replace(/\s+/g, " ").trim(); }
-function absUrl(u, base) { try { return new URL(u, base).href; } catch { return ""; } }
-
-function parseListing(html, sourceUrl) {
-  const title = (html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)/i)?.[1] ||
-                 html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "").trim();
-  const description = (html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)/i)?.[1] || "").trim();
-  const images = [];
-  const pushImg = u => { u=absUrl(u,sourceUrl); if(u && !images.includes(u)) images.push(u); };
-  for(const m of html.matchAll(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)/gi)) pushImg(m[1]);
-  for(const m of html.matchAll(/(?:src|data-src|data-image-url)=["']([^"']+\.(?:jpg|jpeg|png|webp)[^"']*)["']/gi)) pushImg(m[1]);
-
-  let vehicle={};
-  for(const m of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)){
-    try{
-      const x=JSON.parse(m[1].trim()), arr=Array.isArray(x)?x:[x];
-      const found=arr.find(o=>/Vehicle|Product|Car/i.test(o?.["@type"]||""));
-      if(found){vehicle=found;break;}
-    }catch{}
-  }
-  const price=vehicle?.offers?.price ?? vehicle?.price ?? "";
-  const year=vehicle?.vehicleModelDate || vehicle?.productionDate || "";
-  const mileage=vehicle?.mileageFromOdometer?.value ?? "";
-  const color=vehicle?.color || "";
-  const brand=vehicle?.brand?.name || "";
-  const model=vehicle?.model || "";
-  return {
-    title:cleanText(vehicle?.name || title),
-    description:cleanText(vehicle?.description || description),
-    year:String(year||""), km:mileage?String(mileage):"", color:cleanText(color),
-    price_eur:price?Number(String(price).replace(/[^\d.,]/g,"").replace(",",".")):null,
-    images:images.slice(0,40), brand:cleanText(brand), model:cleanText(model),
-    warnings:[
-      images.length?null:"Nepodarilo sa nájsť fotografie automaticky.",
-      title?null:"Nepodarilo sa nájsť názov vozidla.",
-      price?null:"Nepodarilo sa nájsť cenu – doplň ju ručne."
-    ].filter(Boolean)
-  };
-}
-
-app.get("/api/health", c=>json({ok:true,service:"ReVolt Drive"}));
-
-app.post("/api/import", async c=>{
-  const body=await c.req.json().catch(()=>({})), sourceUrl=body.url;
-  if(!sourceUrl)return json({error:"Chýba URL inzerátu."},400);
-  let u; try{u=new URL(sourceUrl);}catch{return json({error:"Neplatná URL."},400);}
-  const allowed=["autoscout24.de","autoscout24.com","mobile.de","suchen.mobile.de"];
-  if(!allowed.some(d=>u.hostname===d||u.hostname.endsWith("."+d)))
-    return json({error:"Tento zdroj zatiaľ nie je v automatickom importéri povolený."},400);
-  try{
-    const r=await fetch(u.href,{headers:{"user-agent":"Mozilla/5.0 (compatible; ReVoltDriveImporter/1.0)","accept-language":"de-DE,de;q=0.9,en;q=0.8"}});
-    if(!r.ok)return json({error:`Zdroj odpovedal HTTP ${r.status}.`},502);
-    const html=await r.text(), parsed=parseListing(html,u.href);
-    return json({ok:true,source:u.href,imported:parsed});
-  }catch{return json({error:"Import sa nepodaril. Skontroluj URL alebo dostupnosť zdroja."},502);}
-});
-
-app.get("/api/cars",async c=>{
-  if(!c.env.DB)return c.json({cars:[]});
-  const {results=[]}=await c.env.DB.prepare(`
-    SELECT id,title,subtitle,year,km,power,range_km,drive,color,price_eur,status,description
-    FROM cars ORDER BY created_at DESC
-  `).all();
-  return c.json({cars:results});
-});
-
-app.get("/api/cars/:id",async c=>{
-  if(!c.env.DB)return c.json({error:"DB not configured"},503);
-  const id=c.req.param("id");
-  const car=await c.env.DB.prepare(`
-    SELECT id,title,subtitle,year,km,power,range_km,drive,color,price_eur,status,description
-    FROM cars WHERE id=?
-  `).bind(id).first();
-  if(!car)return c.json({error:"Vozidlo nenájdené"},404);
-  const {results:equipment=[]}=await c.env.DB.prepare("SELECT item FROM equipment WHERE car_id=? ORDER BY rowid").bind(id).all();
-  const {results:photos=[]}=await c.env.DB.prepare("SELECT id,url,position FROM photos WHERE car_id=? ORDER BY position").bind(id).all();
-  return c.json({car,equipment:equipment.map(x=>x.item),photos});
-});
-
-app.post("/api/cars",async c=>{
-  if(!c.env.DB)return c.json({error:"DB nie je nakonfigurovaná."},503);
-  const b=await c.req.json(), id=b.id||crypto.randomUUID();
-  if(!b.title)return c.json({error:"Názov je povinný."},400);
-  await c.env.DB.prepare(`
-    INSERT OR REPLACE INTO cars
-    (id,title,subtitle,year,km,power,range_km,drive,color,price_eur,purchase_price_eur,status,description,source_url,updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)
-  `).bind(id,b.title,b.subtitle||"",b.year||"",b.km||"",b.power||"",b.range_km||"",b.drive||"",b.color||"",
-    Number(b.price_eur)||0,Number(b.purchase_price_eur)||0,b.status||"available",b.description||"",b.source_url||"").run();
-  await c.env.DB.prepare("DELETE FROM equipment WHERE car_id=?").bind(id).run();
-  for(const item of (b.equipment||[])) if(item) await c.env.DB.prepare("INSERT INTO equipment(car_id,item) VALUES(?,?)").bind(id,item).run();
-  await c.env.DB.prepare("DELETE FROM photos WHERE car_id=?").bind(id).run();
-  for(let i=0;i<(b.images||[]).length;i++) await c.env.DB.prepare("INSERT INTO photos(id,car_id,url,position,processed) VALUES(?,?,?,?,?)")
-    .bind(crypto.randomUUID(),id,b.images[i],i,0).run();
-  return c.json({ok:true,id});
-});
-
-app.patch("/api/cars/:id",async c=>{
-  if(!c.env.DB)return c.json({error:"DB nie je nakonfigurovaná."},503);
-  const id=c.req.param("id"), b=await c.req.json(), allowed=["title","subtitle","year","km","power","range_km","drive","color","price_eur","status","description"];
-  const sets=[],vals=[];
-  for(const k of allowed)if(k in b){sets.push(`${k}=?`);vals.push(k==="price_eur"?Number(b[k]):b[k]);}
-  if(!sets.length)return c.json({ok:true});
-  sets.push("updated_at=CURRENT_TIMESTAMP");
-  await c.env.DB.prepare(`UPDATE cars SET ${sets.join(",")} WHERE id=?`).bind(...vals,id).run();
-  return c.json({ok:true});
-});
-
-app.delete("/api/cars/:id",async c=>{
-  if(!c.env.DB)return c.json({error:"DB nie je nakonfigurovaná."},503);
-  await c.env.DB.prepare("DELETE FROM cars WHERE id=?").bind(c.req.param("id")).run();
-  return c.json({ok:true});
-});
-
-app.all("*",async c=>c.env.ASSETS.fetch(c.req.raw));
-export default app;
+app.get("/api/health",c=>json({ok:true,service:"ReVolt Drive"}));
+app.post("/api/import",async c=>{const body=await c.req.json().catch(()=>({})),sourceUrl=body.url;if(!sourceUrl)return json({error:"Chýba URL inzerátu."},400);let u;try{u=new URL(sourceUrl)}catch{return json({error:"Neplatná URL."},400)}const allowed=["autoscout24.de","autoscout24.com","mobile.de","suchen.mobile.de"];if(!allowed.some(d=>u.hostname===d||u.hostname.endsWith("."+d)))return json({error:"Tento zdroj zatiaľ nie je v automatickom importéri povolený."},400);try{const r=await fetch(u.href,{headers:{"user-agent":"Mozilla/5.0 (compatible; ReVoltDriveImporter/1.0)","accept-language":"de-DE,de;q=0.9,en;q=0.8"}});if(!r.ok)return json({error:"Zdroj odpovedal HTTP "+r.status+"."},502);return json({ok:true,source:u.href,imported:parseListing(await r.text(),u.href)})}catch{return json({error:"Import sa nepodaril. Skontroluj URL alebo dostupnosť zdroja."},502)}});
+app.get("/api/cars",async c=>{if(!c.env.DB)return c.json({cars:[]});const {results=[]}=await c.env.DB.prepare("SELECT cars.id,cars.title,cars.subtitle,cars.year,cars.km,cars.power,cars.range_km,cars.drive,cars.color,cars.price_eur,cars.status,cars.description,(SELECT url FROM photos p WHERE p.car_id=cars.id ORDER BY p.position LIMIT 1) AS cover_url FROM cars ORDER BY created_at DESC").all();return c.json({cars:results})});
+app.get("/api/cars/:id",async c=>{if(!c.env.DB)return c.json({error:"DB not configured"},503);const id=c.req.param("id");const car=await c.env.DB.prepare("SELECT id,title,subtitle,year,km,power,range_km,drive,color,price_eur,status,description FROM cars WHERE id=?").bind(id).first();if(!car)return c.json({error:"Vozidlo nenájdené"},404);const {results:equipment=[]}=await c.env.DB.prepare("SELECT item FROM equipment WHERE car_id=? ORDER BY rowid").bind(id).all(),{results:photos=[]}=await c.env.DB.prepare("SELECT id,url,position FROM photos WHERE car_id=? ORDER BY position").bind(id).all();return c.json({car,equipment:equipment.map(x=>x.item),photos})});
+app.get("/media/:carId/:file",async c=>{if(!c.env.PHOTOS)return c.notFound();const obj=await c.env.PHOTOS.get(c.req.param("carId")+"/"+c.req.param("file"));if(!obj)return c.notFound();const h=new Headers();obj.writeHttpMetadata(h);h.set("cache-control","public,max-age=31536000,immutable");return new Response(obj.body,{headers:h})});
+app.post("/api/cars",async c=>{if(!c.env.DB)return c.json({error:"DB nie je nakonfigurovaná."},503);const b=await c.req.json(),id=b.id||crypto.randomUUID();if(!b.title)return c.json({error:"Názov je povinný."},400);await c.env.DB.prepare("INSERT OR REPLACE INTO cars (id,title,subtitle,year,km,power,range_km,drive,color,price_eur,purchase_price_eur,status,description,source_url,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)").bind(id,b.title,b.subtitle||"",b.year||"",b.km||"",b.power||"",b.range_km||"",b.drive||"",b.color||"",Number(b.price_eur)||0,Number(b.purchase_price_eur)||0,b.status||"available",b.description||"",b.source_url||"").run();await c.env.DB.prepare("DELETE FROM equipment WHERE car_id=?").bind(id).run();for(const item of b.equipment||[])if(item)await c.env.DB.prepare("INSERT INTO equipment(car_id,item) VALUES(?,?)").bind(id,item).run();await c.env.DB.prepare("DELETE FROM photos WHERE car_id=?").bind(id).run();for(let i=0;i<(b.images||[]).length;i++){const src=b.images[i];let stored=src;if(c.env.PHOTOS){try{const ir=await fetch(src,{headers:{"user-agent":"Mozilla/5.0","accept":"image/*,*/*;q=0.8"}});if(ir.ok){const type=ir.headers.get("content-type")||"image/webp",ext=type.includes("jpeg")||type.includes("jpg")?"jpg":type.includes("png")?"png":"webp",key=id+"/"+String(i).padStart(2,"0")+"."+ext;await c.env.PHOTOS.put(key,await ir.arrayBuffer(),{httpMetadata:{contentType:type}});stored="/media/"+id+"/"+String(i).padStart(2,"0")+"."+ext}}catch{}}await c.env.DB.prepare("INSERT INTO photos(id,car_id,url,position,processed) VALUES(?,?,?,?,?)").bind(crypto.randomUUID(),id,stored,i,stored!==src?1:0).run()}return c.json({ok:true,id})});
+app.patch("/api/cars/:id",async c=>{if(!c.env.DB)return c.json({error:"DB nie je nakonfigurovaná."},503);const id=c.req.param("id"),b=await c.req.json(),allowed=["title","subtitle","year","km","power","range_km","drive","color","price_eur","purchase_price_eur","status","description"],sets=[],vals=[];for(const k of allowed)if(k in b){sets.push(k+"=?");vals.push(k.includes("price")?Number(b[k]):b[k])}if(!sets.length)return c.json({ok:true});sets.push("updated_at=CURRENT_TIMESTAMP");await c.env.DB.prepare("UPDATE cars SET "+sets.join(",")+" WHERE id=?").bind(...vals,id).run();return c.json({ok:true})});
+app.delete("/api/cars/:id",async c=>{if(!c.env.DB)return c.json({error:"DB nie je nakonfigurovaná."},503);await c.env.DB.prepare("DELETE FROM cars WHERE id=?").bind(c.req.param("id")).run();return c.json({ok:true})});
+app.all("*",async c=>c.env.ASSETS.fetch(c.req.raw));export default app;
