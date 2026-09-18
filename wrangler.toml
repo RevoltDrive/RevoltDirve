@@ -6,7 +6,14 @@ compatibility_date = "2026-09-18"
 directory = "./public"
 binding = "ASSETS"
 
+[[d1_databases]]
+binding = "DB"
+database_name = "revolt-drive-db"
+database_id = "6ae365d8-ce6d-46b9-9222-861f4698c035"
+
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "revolt-drive-photos"
+
 # Production:
-# - bind D1 as DB
-# - bind R2 as PHOTOS
-# - set ADMIN_PASSWORD as a Worker secret
+# - ADMIN_PASSWORD and authentication will be added before public launch.
