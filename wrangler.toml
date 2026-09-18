@@ -1,0 +1,12 @@
+name = "revolt-drive-auto-system"
+main = "src/worker.js"
+compatibility_date = "2026-09-18"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# Production:
+# - bind D1 as DB
+# - bind R2 as PHOTOS
+# - set ADMIN_PASSWORD as a Worker secret
