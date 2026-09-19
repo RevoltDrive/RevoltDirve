@@ -16,14 +16,19 @@ function parseListing(html,sourceUrl){
     u=String(u||"").replace(/\\u002F/gi,"/").replace(/\\\//g,"/").replace(/[),;]+$/,"");
     u=absUrl(u,sourceUrl);
     if(!u||!/prod\.pictures\.autoscout24\.net/i.test(u))return;
-    // AutoScout24 exposes the same photo as:
-    // .../<photo>.jpg/120x90.webp, .../<photo>.jpg/720x540.webp, etc.
-    // Strip the resolution suffix first. The remaining .jpg URL identifies
-    // the physical photo, so all size variants collapse to one entry.
-    u=u.replace(/\/(?:120x90|250x188|420x315|720x540|800x600|1280x960|2560x1920)\.(?:jpg|jpeg|webp|png)(?:\?.*)?$/i,"");
+    // AutoScout24 appends the requested resolution after the real image file,
+    // e.g. /photo.jpg/120x90.webp, /photo.jpg/720x540.webp, etc.
+    // Canonicalize by cutting the URL immediately after the original image
+    // filename. This makes all resolutions of one photo the same URL.
+    try{
+      const x=new URL(u);
+      const m=x.pathname.match(/^(.*?\.(?:jpg|jpeg|png))(?:\/.*)?$/i);
+      if(m)x.pathname=m[1];
+      x.search="";
+      u=x.href;
+    }catch{}
     if(!images.includes(u))images.push(u)
-  };
-  for(const m of normalizedHtml.matchAll(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)/gi))pushImg(m[1]);
+  };  for(const m of normalizedHtml.matchAll(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)/gi))pushImg(m[1]);
   for(const m of normalizedHtml.matchAll(/(?:src|data-src|data-image-url|data-srcset)\s*=\s*["']([^"']+)["']/gi))pushImg(m[1].split(/\s+/)[0]);
   for(const m of normalizedHtml.matchAll(/https?:\/\/prod\.pictures\.autoscout24\.net\/listing-images\/[^"'<>\s]+/gi))pushImg(m[0]);
   const styea=firstMatch(html,/"styea"\s*:\s*"?(\d{4})/i),stmon=firstMatch(html,/"stmon"\s*:\s*"?(\d{1,2})/i),stmil=firstMatch(html,/"stmil"\s*:\s*"?(\d+)/i),stkw=firstMatch(html,/"stkw"\s*:\s*"?(\d+)/i),sthp=firstMatch(html,/"sthp"\s*:\s*"?(\d+)/i),cost=firstMatch(html,/"cost"\s*:\s*"?(\d+(?:\.\d+)?)/i);
