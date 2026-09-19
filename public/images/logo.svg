@@ -1,1 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 150"><rect width="520" height="150" fill="none"/><text x="12" y="93" font-family="Arial,Helvetica,sans-serif" font-size="72" font-weight="800" fill="#fff">ReVolt</text><text x="290" y="93" font-family="Arial,Helvetica,sans-serif" font-size="72" font-weight="800" fill="#9cff00">Drive</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 180">
+<rect width="620" height="180" fill="none"/>
+<g transform="skewX(-8)">
+<text x="18" y="104" font-family="Arial Black,Arial,sans-serif" font-size="92" font-weight="900" font-style="italic" fill="#9cff00">R</text>
+<text x="92" y="104" font-family="Arial Black,Arial,sans-serif" font-size="92" font-weight="900" font-style="italic" fill="#fff">EV</text>
+<text x="232" y="104" font-family="Arial Black,Arial,sans-serif" font-size="92" font-weight="900" font-style="italic" fill="#fff">OLT</text>
+</g>
+<path d="M285 10 L244 92 L275 92 L250 155 L319 68 L285 68 Z" fill="#9cff00"/>
+<path d="M285 10 L268 70 L286 70 L250 128 L300 69 L282 69 Z" fill="#fff" opacity=".95"/>
+<text x="245" y="155" font-family="Arial,sans-serif" font-size="31" font-weight="700" letter-spacing="13" fill="#fff">DRIVE</text>
+</svg>
