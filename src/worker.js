@@ -31,7 +31,7 @@ function parseListing(html,sourceUrl){
   };  for(const m of normalizedHtml.matchAll(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)/gi))pushImg(m[1]);
   for(const m of normalizedHtml.matchAll(/(?:src|data-src|data-image-url|data-srcset)\s*=\s*["']([^"']+)["']/gi))pushImg(m[1].split(/\s+/)[0]);
   for(const m of normalizedHtml.matchAll(/https?:\/\/prod\.pictures\.autoscout24\.net\/listing-images\/[^"'<>\s]+/gi))pushImg(m[0]);
-  const styea=firstMatch(html,/"styea"\s*:\s*"?(\d{4})/i),stmon=firstMatch(html,/"stmon"\s*:\s*"?(\d{1,2})/i),stmil=firstMatch(html,/"stmil"\s*:\s*"?(\d+)/i),stkw=firstMatch(html,/"stkw"\s*:\s*"?(\d+)/i),sthp=firstMatch(html,/"sthp"\s*:\s*"?(\d+)/i),cost=firstMatch(html,/"cost"\s*:\s*"?(\d+(?:\.\d+)?)/i);
+  const styea=firstMatch(html,/"styea"\s*:\s*"?(\d{4})/i),stmon=firstMatch(html,/"stmon"\s*:\s*"?(\d{1,2})/i),stmil=firstMatch(html,/"stmil"\s*:\s*"?(\d+)/i),stkw=firstMatch(html,/"stkw"\s*:\s*"?(\d+)/i),sthp=firstMatch(html,/"sthp"\s*:\s*"?(\d+)/i),cost=firstMatch(html,/"cost"\s*:\s*"?(\d+(?:\.\d+)?)/i)||firstMatch(html,/"vehiclePrice"\s*:\s*"?(\d+(?:\.\d+)?)/i)||firstMatch(html,/"salePrice"\s*:\s*"?(\d+(?:\.\d+)?)/i)||firstMatch(html,/(?:Kaufpreis|Fahrzeugpreis|Bruttopreis|Gesamtpreis|Preis)\\s*:?\\s*(\\d{1,3}(?:[. ]\\d{3})+|\\d{4,6})\\s*€/i);
   const year=styea?(stmon?stmon.padStart(2,"0")+"/"+styea:styea):firstMatch(text,/Erstzulassung\s+(\d{2}\/\d{4})/i);
   const km=stmil||firstMatch(text,/Kilometerstand\s+([\d.]+\s*km)/i).replace(/\s*km/i,"").replace(/\./g,"");
   const range=firstMatch(text,/Elektrische Reichweite(?:\^\d+)?\s+([\d.]+\s*km)/i).replace(/\s*km/i,"").replace(/\./g,"");
