@@ -5,7 +5,7 @@
 :root{--g:#9cff00;--bg:#050505;--card:#101010;--line:#292929;--muted:#9b9b9b}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:#fff;font-family:Inter,Arial,sans-serif}
 header{position:sticky;top:0;z-index:10;background:rgba(5,5,5,.94);backdrop-filter:blur(12px);border-bottom:1px solid #1e1e1e}
-.wrap{max-width:1180px;margin:auto;padding:0 22px}.nav{height:76px;display:flex;align-items:center;justify-content:space-between}.logo{height:56px;max-width:190px;object-fit:contain}
+.wrap{max-width:1180px;margin:auto;padding:0 22px}.nav{height:76px;display:flex;align-items:center;justify-content:space-between}.logo{width:220px;height:auto;max-width:220px;object-fit:contain}
 nav a{margin-left:24px;text-decoration:none;color:#fff;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.1em}
 .hero{text-align:center;padding:70px 0 42px}.k{color:var(--g);font-size:12px;font-weight:900;letter-spacing:.22em;text-transform:uppercase}
 h1{font-size:clamp(36px,5vw,64px);margin:12px 0 10px;letter-spacing:-.05em;text-transform:uppercase}.hero p{max-width:690px;margin:auto;color:var(--muted);line-height:1.6}
@@ -18,7 +18,7 @@ footer{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-s
 
 @media(max-width:760px){nav{display:none}.grid{grid-template-columns:1fr}.gallery{grid-template-columns:1fr}.side{grid-template-columns:1fr 1fr;grid-template-rows:none;height:140px}.info{grid-template-columns:1fr}.six{grid-template-columns:repeat(2,1fr)}}
 </style></head><body>
-<header><div class="wrap nav"><img class="logo" src="images/logo.svg" alt="ReVolt Drive"><nav><a href="#ponuka">Ponuka</a><a href="#kontakt">Kontakt</a></nav></div></header>
+<header><div class="wrap nav"><img class="logo" src="images/revolt-vrch.jpg" alt="ReVolt Drive"><nav><a href="#ponuka">Ponuka</a><a href="#kontakt">Kontakt</a></nav></div></header>
 <section class="hero"><div class="wrap"><div class="k">ReVolt Drive</div><h1>Audi Q4 e-tron</h1><p>Konkrétna ponuka vozidiel vybraná pre vás. Kliknite na vozidlo a pozrite si fotografie, technické údaje a výbavu.</p></div></section>
 <main class="wrap"><div id="ponuka" class="grid"></div></main>
 <footer id="kontakt"><div class="wrap"><b style="color:#fff">ReVolt Drive</b><br><br>Dovoz • Previerka • Diagnostika • Predaj<br>Kontakt doplníme v administrácii.</div></footer>
