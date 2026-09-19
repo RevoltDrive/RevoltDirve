@@ -15,7 +15,11 @@ function parseListing(html,sourceUrl){
   const pushImg=u=>{
     u=String(u||"").replace(/\\u002F/gi,"/").replace(/\\\//g,"/").replace(/[),;]+$/,"");
     u=absUrl(u,sourceUrl);
-    if(u&&!images.includes(u)&&/prod\.pictures\.autoscout24\.net/i.test(u))images.push(u)
+    if(!u||!/prod\.pictures\.autoscout24\.net/i.test(u))return;
+    // AutoScout24 exposes the same photo in many resolutions. Normalize all
+    // size variants to one canonical URL so one physical photo is imported once.
+    u=u.replace(/\/(?:120x90|250x188|420x315|720x540|800x600|1280x960|2560x1920)\.(?:jpg|jpeg|webp|png)(?:\?.*)?$/i,"/1280x960.webp");
+    if(!images.includes(u))images.push(u)
   };
   for(const m of normalizedHtml.matchAll(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)/gi))pushImg(m[1]);
   for(const m of normalizedHtml.matchAll(/(?:src|data-src|data-image-url|data-srcset)\s*=\s*["']([^"']+)["']/gi))pushImg(m[1].split(/\s+/)[0]);
