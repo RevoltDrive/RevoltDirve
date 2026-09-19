@@ -36,7 +36,7 @@ function parseListing(html,sourceUrl){
   const km=stmil||firstMatch(text,/Kilometerstand\s+([\d.]+\s*km)/i).replace(/\s*km/i,"").replace(/\./g,"");
   const range=firstMatch(text,/Elektrische Reichweite(?:\^\d+)?\s+([\d.]+\s*km)/i).replace(/\s*km/i,"").replace(/\./g,"");
   const power=stkw?(sthp?stkw+" kW / "+sthp+" k":""):firstMatch(text,/Leistung\s+(\d+\s*kW(?:\s*\(\d+\s*PS\))?)/i);
-  const rawDrive=firstMatch(text,/Antriebsart\s*:?\s*(Heck(?:antrieb)?|Front(?:antrieb)?|Allrad(?:antrieb)?|Vorderradantrieb|Hinterradantrieb|Vorderrad|Hinterrad)/i);
+  const driveSource=cleanText(html.replace(/<style[\s\S]*?<\/style>/gi," ").replace(/<[^>]+>/g," "));\n  const rawDrive=firstMatch(text,/Antriebsart\s*:?\s*(Heck(?:antrieb)?|Front(?:antrieb)?|Allrad(?:antrieb)?|Vorderradantrieb|Hinterradantrieb|Vorderrad|Hinterrad)/i)||firstMatch(driveSource,/Antriebsart\s*:?\s*(Heck(?:antrieb)?|Front(?:antrieb)?|Allrad(?:antrieb)?|Vorderradantrieb|Hinterradantrieb|Vorderrad|Hinterrad)/i);
   const driveMap={"Heck":"Pohon zadných kolies","Heckantrieb":"Pohon zadných kolies","Hinterrad":"Pohon zadných kolies","Hinterradantrieb":"Pohon zadných kolies","Front":"Pohon predných kolies","Frontantrieb":"Pohon predných kolies","Vorderrad":"Pohon predných kolies","Vorderradantrieb":"Pohon predných kolies","Allrad":"Pohon všetkých kolies","Allradantrieb":"Pohon všetkých kolies"};
   const drive=driveMap[rawDrive]||rawDrive;
   const rawColor=firstMatch(text,/Außenfarbe\s+([A-Za-zÄÖÜäöüß-]+(?:\s+[A-Za-zÄÖÜäöüß-]+){0,2})\s+Farbe laut Hersteller/i)||firstMatch(text,/Außenfarbe\s+([A-Za-zÄÖÜäöüß-]+)/i);
