@@ -37,13 +37,32 @@ function parseListing(html,sourceUrl){
   const range=firstMatch(text,/Elektrische Reichweite(?:\^\d+)?\s+([\d.]+\s*km)/i).replace(/\s*km/i,"").replace(/\./g,"");
   const power=stkw?(sthp?stkw+" kW / "+sthp+" k":""):firstMatch(text,/Leistung\s+(\d+\s*kW(?:\s*\(\d+\s*PS\))?)/i);
   const drive=firstMatch(text,/Antriebsart\s+(Heck|Front|Allrad|Vorderrad|Hinterrad)/i);
-  const color=firstMatch(text,/Außenfarbe\s+([A-Za-zÄÖÜäöüß-]+(?:\s+[A-Za-zÄÖÜäöüß-]+){0,2})\s+Farbe laut Hersteller/i)||firstMatch(text,/Außenfarbe\s+([A-Za-zÄÖÜäöüß-]+)/i);
+  const rawColor=firstMatch(text,/Außenfarbe\s+([A-Za-zÄÖÜäöüß-]+(?:\s+[A-Za-zÄÖÜäöüß-]+){0,2})\s+Farbe laut Hersteller/i)||firstMatch(text,/Außenfarbe\s+([A-Za-zÄÖÜäöüß-]+)/i);
+  const colorMap={"Weiß":"Biela","Schwarz":"Čierna","Grau":"Sivá","Silber":"Strieborná","Blau":"Modrá","Rot":"Červená","Grün":"Zelená","Braun":"Hnedá","Beige":"Béžová","Gelb":"Žltá","Orange":"Oranžová"};
+  const color=rawColor.split(/\s+/).map(x=>colorMap[x]||x).join(" ");
   const slug=new URL(sourceUrl).pathname.split("/angebote/")[1]?.split("-cat_")[0]||"";
   let title=slug?slug.replace(/-elektro-.*$/i,"").replace(/-/g," "):"";
   if(title)title=title.replace(/\b\w/g,m=>m.toUpperCase()).replace(/Q4 E Tron/i,"Q4 e-tron").replace(/Audi Q4 E-tron/i,"Audi Q4 e-tron");
   if(!title)title=firstMatch(html,/<h1[^>]*>([\s\S]*?)<\/h1>/i)||"Nové vozidlo";
-  const equipment=[],start=html.search(/Ausstattung/i),end=html.search(/Farbe und Innenausstattung/i);
-  if(start>=0){const section=html.slice(start,end>start?end:Math.min(html.length,start+90000));for(const m of section.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)){const item=cleanText(m[1].replace(/<[^>]+>/g," "));if(item&&item.length<120&&!equipment.includes(item)&&!/^(Kaufen|Verkaufen|Informieren|Mehr anzeigen)$/i.test(item))equipment.push(item)}}
+  const equipment=[];
+  const allLi=[];
+  for(const m of html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)){
+    const item=cleanText(m[1].replace(/<[^>]+>/g," "));
+    if(item&&item.length<120&&!allLi.includes(item))allLi.push(item)
+  }
+  const anchors=["3-Zonen-Klimaautomatik","Einparkhilfe","Navigationssystem","Sitzheizung","Tempomat","Bluetooth","ABS","Alufelgen"];
+  let eqStart=allLi.findIndex(x=>anchors.some(a=>x.toLowerCase()===a.toLowerCase()));
+  if(eqStart>=0){
+    for(let i=eqStart;i<allLi.length;i++){
+      const item=allLi[i];
+      if(/^Mehr anzeigen$/i.test(item))break;
+      if(!/^(Komfort|Unterhaltung\/Media|Sicherheit|Extras)$/i.test(item)&&!equipment.includes(item))equipment.push(item)
+    }
+  }
+  const equipMap={
+    "3-Zonen-Klimaautomatik":"3-zónová automatická klimatizácia","Armlehne":"Lakťová opierka","Einparkhilfe":"Parkovacie senzory","Einparkhilfe Rückfahrkamera":"Parkovacie senzory s cúvacou kamerou","Einparkhilfe Sensoren hinten":"Zadné parkovacie senzory","Einparkhilfe Sensoren vorne":"Predné parkovacie senzory","Elektrische Fensterheber":"Elektrické ovládanie okien","Elektrische Heckklappe":"Elektrické otváranie kufra","Elektrische Seitenspiegel":"Elektricky nastaviteľné spätné zrkadlá","Getönte Scheiben":"Tónované sklá","Lederausstattung":"Kožené čalúnenie","Lederlenkrad":"Kožený volant","Lichtsensor":"Svetelný senzor","Multifunktionslenkrad":"Multifunkčný volant","Navigationssystem":"Navigačný systém","Regensensor":"Dažďový senzor","Schlüssellose Zentralverriegelung":"Bezkľúčové odomykanie a zamykanie","Sitzheizung":"Vyhrievané sedadlá","teilb. Rücksitzbank":"Delené zadné sedadlá","Tempomat":"Tempomat","Bluetooth":"Bluetooth","Bordcomputer":"Palubný počítač","DAB-Radio":"DAB rádio","Freisprecheinrichtung":"Handsfree","Radio":"Rádio","Soundsystem":"Audiosystém","Volldigitales Kombiinstrument":"Digitálny prístrojový panel","ABS":"ABS","Abstandstempomat":"Adaptívny tempomat","Abstandswarner":"Upozornenie na odstup","Beifahrerairbag":"Airbag spolujazdca","ESP":"ESP","Fahrerairbag":"Airbag vodiča","Geschwindigkeits-begrenzungsanlage":"Obmedzovač rýchlosti","Isofix":"ISOFIX","Kopfairbag":"Hlavové airbagy","LED-Scheinwerfer":"LED svetlomety","LED-Tagfahrlicht":"LED denné svietenie","Notbremsassistent":"Asistent núdzového brzdenia","Notrufsystem":"Núdzové volanie","Reifendruckkontrollsystem":"Kontrola tlaku v pneumatikách","Seitenairbag":"Bočné airbagy","Servolenkung":"Posilňovač riadenia","Spurhalteassistent":"Asistent udržiavania v jazdnom pruhu","Tagfahrlicht":"Denné svietenie","Totwinkel-Assistent":"Asistent mŕtveho uhla","Traktionskontrolle":"Kontrola trakcie","Verkehrszeichenerkennung":"Rozpoznávanie dopravných značiek","Wegfahrsperre":"Imobilizér","Zentralverriegelung":"Centrálne zamykanie","Alufelgen":"Hliníkové disky","Ambientebeleuchtung":"Ambientné osvetlenie","Schaltwippen":"Páčky radenia pod volantom","Sommerreifen":"Letné pneumatiky","Sportfahrwerk":"Športový podvozok","Sportpaket":"Športový paket","Sportsitze":"Športové sedadlá","Sprachsteuerung":"Hlasové ovládanie","Touchscreen":"Dotyková obrazovka"
+  };
+  for(let i=0;i<equipment.length;i++)equipment[i]=equipMap[equipment[i]]||equipment[i];
   const known=["3-Zonen-Klimaautomatik","Einparkhilfe","Navigationssystem","Panoramadach","Sitzheizung","Standheizung","Tempomat","Android Auto","Apple CarPlay","Bluetooth","DAB-Radio","Soundsystem","LED-Scheinwerfer","Spurhalteassistent","Verkehrszeichenerkennung","Alufelgen","Touchscreen","Komfortschlüssel","Panorama Glas Dach","Audi virtual cockpit","MMI Navigation plus","Audi sound system","Audi drive select","On-board-Ladegerät bis 11 kW (AC)","Hochvolt-Batterie 82 kWh (brutto)","Heckantrieb"];
   for(const item of known)if(text.toLowerCase().includes(item.toLowerCase())&&!equipment.some(x=>x.toLowerCase()===item.toLowerCase()))equipment.push(item);
   return {title:cleanText(title),description:firstMatch(html,/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)/i),year,km,power,range_km:range,drive,color,price_eur:cost?Number(cost):null,images:images.slice(0,40),equipment:equipment.slice(0,100),warnings:[images.length?null:"Nepodarilo sa nájsť fotografie automaticky.",title?null:"Nepodarilo sa nájsť názov vozidla.",year&&km&&power?null:"Niektoré technické údaje sa nepodarilo načítať."].filter(Boolean)};
