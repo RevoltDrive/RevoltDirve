@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS cars (
   color TEXT,
   price_eur REAL,
   purchase_price_eur REAL,
+  purchase_price_net_eur REAL DEFAULT 0,
+  purchase_price_gross_eur REAL DEFAULT 0,
   status TEXT DEFAULT 'available',
   description TEXT,
   source_url TEXT,
