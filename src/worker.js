@@ -36,9 +36,9 @@ function parseListing(html,sourceUrl){
   const priceSource=cleanText(html.replace(/<[^>]+>/g," "));
   const priceNet=firstMatch(text,/Netto(?:-Kaufpreis)?[^0-9€]{0,120}([0-9][0-9. ]{2,8}(?:,[0-9]{1,2})?)\s*€/i)||firstMatch(priceSource,/Netto(?:-Kaufpreis)?[^0-9€]{0,120}([0-9][0-9. ]{2,8}(?:,[0-9]{1,2})?)\s*€/i)||firstMatch(text,/Netto[^0-9]{0,120}([0-9][0-9. ]{2,8}(?:,[0-9]{1,2})?)\s*€/i)||firstMatch(priceSource,/Netto[^0-9]{0,120}([0-9][0-9. ]{2,8}(?:,[0-9]{1,2})?)\s*€/i);
   const priceGross=firstMatch(text,/Brutto(?:-Kaufpreis)?[^0-9€]{0,120}([0-9][0-9. ]{2,8}(?:,[0-9]{1,2})?)\s*€/i)||firstMatch(priceSource,/Brutto(?:-Kaufpreis)?[^0-9€]{0,120}([0-9][0-9. ]{2,8}(?:,[0-9]{1,2})?)\s*€/i)||firstMatch(text,/Brutto[^0-9]{0,120}([0-9][0-9. ]{2,8}(?:,[0-9]{1,2})?)\s*€/i)||firstMatch(priceSource,/Brutto[^0-9]{0,120}([0-9][0-9. ]{2,8}(?:,[0-9]{1,2})?)\s*€/i);
-  const jsonLdPrices=[...html.matchAll(/"price"\\s*:\\s*"?([0-9][0-9. ,]*)"?/gi)].map(m=>parsePriceNumber(m[1])).filter(v=>Number.isFinite(v)&&v>500);
-  const metaPrices=[...html.matchAll(/(?:price:amount|product:price:amount|priceAmount|grossPrice|netPrice)\\s*["=:]+\\s*"?([0-9][0-9. ,]*)/gi)].map(m=>parsePriceNumber(m[1])).filter(v=>Number.isFinite(v)&&v>500);
-  const euroPrices=[...priceSource.matchAll(/([0-9]{1,3}(?:[. ]\\d{3})+(?:,[0-9]{1,2})?|[0-9]{4,6})\\s*€/g)].map(m=>parsePriceNumber(m[1])).filter(v=>Number.isFinite(v)&&v>500);
+  const jsonLdPrices=[...html.matchAll(/"price"\s*:\s*"?(\\d+(?:[.,]\\d+)?)"?/gi)].map(m=>parsePriceNumber(m[1])).filter(v=>Number.isFinite(v)&&v>500);
+  const metaPrices=[...html.matchAll(/(?:price:amount|product:price:amount|priceAmount|grossPrice|netPrice)\s*["=:]+\s*"?(\\d+(?:[.,]\\d+)?)?/gi)].map(m=>parsePriceNumber(m[1])).filter(v=>Number.isFinite(v)&&v>500);
+  const euroPrices=[...priceSource.matchAll(/([0-9]{1,3}(?:[. ]\d{3})+(?:,[0-9]{1,2})?|[0-9]{4,6})\s*€/g)].map(m=>parsePriceNumber(m[1])).filter(v=>Number.isFinite(v)&&v>500);
   const parsedNet=parsePriceNumber(priceNet),parsedGross=parsePriceNumber(priceGross);
   const genericPrice=(jsonLdPrices[0]||metaPrices[0]||euroPrices.find(v=>v>=5000&&v<=200000)||null);
   const year=styea?(stmon?stmon.padStart(2,"0")+"/"+styea:styea):firstMatch(text,/Erstzulassung\s+(\d{2}\/\d{4})/i);
