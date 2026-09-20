@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS cars (
   km TEXT,
   power TEXT,
   range_km TEXT,
+  wltp_range_km TEXT,
+  wltp_source TEXT,
   drive TEXT,
   color TEXT,
   price_eur REAL,
