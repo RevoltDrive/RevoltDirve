@@ -112,7 +112,7 @@ async function lookupOfficialWltp(query){
       const lines=body.trim().split(/\\r?\\n/).filter(Boolean);
       if(lines.length>1){const head=lines[0].split(/,|;/).map(x=>x.replace(/^"|"$/g,""));rows=lines.slice(1).map(line=>{const vals=line.split(/,|;/).map(x=>x.replace(/^"|"$/g,""));return Object.fromEntries(head.map((h,i)=>[h,vals[i]]))})}
     }
-    const valid=rows.map(r=>({range:Number(r.Zr??r.zr??r["Electric range (km)"]),name:String(r.Cn??r.cn??"").trim(),power:Number(r.Ep_KW??r.ep_KW??r["Engine power in KW"]||0),year:Number(r.Year??r.year||0)})).filter(r=>Number.isFinite(r.range)&&r.range>0);
+    const valid=rows.map(r=>({range:Number(r.Zr??r.zr??r["Electric range (km)"]),name:String(r.Cn??r.cn??"").trim(),power:Number((r.Ep_KW??r.ep_KW??r["Engine power in KW"])||0),year:Number((r.Year??r.year)||0)})).filter(r=>Number.isFinite(r.range)&&r.range>0);
     if(!valid.length)return null;
     valid.sort((a,b)=>(Math.abs(a.power-kw)-Math.abs(b.power-kw))|| (Math.abs(a.year-year)-Math.abs(b.year-year)));
     return {range_km:Math.round(valid[0].range),source:"EEA – CO2 passenger cars (2025 provisional)",source_url:"https://www.eea.europa.eu/en/datahub/datahubitem-view/fa8b1229-3db6-495d-b18e-9c9b3267c02b",match:valid[0]};
