@@ -5,12 +5,15 @@ let saving=false;async function save(){if(!current||saving)return;saving=true;co
 async function loadCars(){try{const r=await fetch("/api/admin/cars",{cache:"no-store"});const x=await r.json();window._adminCars=x.cars||[];renderAdminCars()}catch{document.getElementById("cars").innerHTML="D1 zatiaľ nie je nakonfigurovaná."}}
 function renderAdminCars(){
   const q=(document.getElementById("carSearch")?.value||"").trim().toLowerCase();
-  const cars=(window._adminCars||[]).filter(c=>
-    !q ||
-    String(c.vehicle_code||"").toLowerCase().includes(q) ||
-    String(c.title||"").toLowerCase().includes(q) ||
-    String(c.id||"").toLowerCase().includes(q)
-  );
+  const cars=(window._adminCars||[]).filter((c,index)=>{
+    const storedCode=String(c.vehicle_code||"").toLowerCase();
+    const displayCode=c.vehicle_code?String(c.vehicle_code).replace(/^RD-/i,"V-"):("V-"+String(index+1).padStart(3,"0"));
+    return !q ||
+      storedCode.includes(q) ||
+      displayCode.toLowerCase().includes(q) ||
+      String(c.title||"").toLowerCase().includes(q) ||
+      String(c.id||"").toLowerCase().includes(q);
+  });
   document.getElementById("cars").innerHTML=cars.map(c=>{
     const code=c.vehicle_code?String(c.vehicle_code).replace(/^RD-/,"V-"):("V-"+String((window._adminCars||[]).findIndex(x=>x.id===c.id)+1).padStart(3,"0"));
     const publicState=Number(c.is_public??1)===1;
