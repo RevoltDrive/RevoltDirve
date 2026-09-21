@@ -12,7 +12,7 @@ function renderAdminCars(){
     String(c.id||"").toLowerCase().includes(q)
   );
   document.getElementById("cars").innerHTML=cars.map(c=>{
-    const code=c.vehicle_code?c.vehicle_code.replace(/^RD-/,"V-"):"—";
+    const code=c.vehicle_code?String(c.vehicle_code).replace(/^RD-/,"V-"):("V-"+String((window._adminCars||[]).findIndex(x=>x.id===c.id)+1).padStart(3,"0"));
     const publicState=Number(c.is_public??1)===1;
     const recommended=Number(c.is_recommended??0)===1;
     const status=c.status==="sold"?"PREDANÉ":c.status==="reserved"?"REZERVOVANÉ":"VOĽNÉ";
