@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+<rect width="1000" height="1000" fill="#000"/>
+<circle cx="500" cy="500" r="455" fill="none" stroke="#9cff00" stroke-width="15"/>
+<g fill="#9cff00">
+<path d="M150 310h370c52 0 72 33 54 75l-63 147h-112l47-109H284l-45 109H132l92-222h-74z"/>
+<path d="M277 455h125l145 205H425L315 510l-58 150H145z"/>
+<path d="M760 300h105L735 455h70L590 685l70-160h-64z"/>
+</g>
+<path d="M590 365h68l-37 122h48l-95 177 25-137h-45z" fill="#fff"/>
+<g fill="#fff" font-family="Arial,Helvetica,sans-serif" font-size="58" font-weight="700" font-style="italic" letter-spacing="32">
+<text x="330" y="760">DRIVE</text>
+</g>
+<g fill="#9cff00"><path d="M205 740h105l-7 20z"/><path d="M795 740h105l-98 20z"/></g>
+</svg>
