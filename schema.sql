@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS cars (
   id TEXT PRIMARY KEY,
+  vehicle_code TEXT UNIQUE,
   title TEXT NOT NULL,
   subtitle TEXT,
   year TEXT,
@@ -33,3 +34,5 @@ CREATE TABLE IF NOT EXISTS photos (
   processed INTEGER DEFAULT 0,
   FOREIGN KEY(car_id) REFERENCES cars(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS vehicle_sequence (id INTEGER PRIMARY KEY CHECK(id=1), next_number INTEGER NOT NULL);
