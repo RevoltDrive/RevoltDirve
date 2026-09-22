@@ -31,7 +31,7 @@ function renderAdminCars(){
           </div>
           <b>${esc(c.title)}</b>
           <span class="muted">${esc(c.year||"")} • ${esc(c.km||"")} • ${status}
-            <button class="infoIcon" title="Informácia o zobrazení" onclick="showPublicInfo(${id},${publicState});event.stopPropagation()">i</button>
+            <button class="infoIcon" title="Informácia o zobrazení" data-id="${esc(c.id)}" onclick="showPublicInfo(this.dataset.id,${publicState});event.stopPropagation()">i</button>
           </span>
         </div>
         <div>
@@ -40,7 +40,7 @@ function renderAdminCars(){
             Nákup s DPH: <b>${fmt(c.purchase_price_gross_eur)}</b> (${fmtRate(c.purchase_vat_rate)})
           </span>
           <span class="price">Predaj: ${fmt(c.price_eur)}</span>
-          <button class="btn dark" onclick="edit(${id})">Upraviť</button>
+          <button class="btn dark" data-id="${esc(c.id)}" onclick="edit(this.dataset.id)">Upraviť</button>
         </div>
       </div>
     </div>`;
