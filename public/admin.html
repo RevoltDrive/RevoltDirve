@@ -48,16 +48,25 @@ function renderAdminCars(){
 }
 function showPublicInfo(id,isPublic){const car=(window._adminCars||[]).find(x=>x.id===id);const title=car?.title||"Vozidlo";const modal=document.getElementById("infoModal");const state=document.getElementById("infoState");document.getElementById("infoTitle").textContent=title;state.className="state "+(isPublic?"on":"off");state.textContent=isPublic?"✓ ZOBRAZENÉ NA HLAVNEJ STRÁNKE":"✕ SKRYTÉ Z HLAVNEJ STRÁNKY";document.getElementById("infoText").textContent=isPublic?"Toto vozidlo sa zobrazuje návštevníkom na hlavnej stránke ReVolt Drive.":"Toto vozidlo je uložené v administrácii, ale na hlavnej stránke sa návštevníkom nezobrazuje. Údaje, fotografie ani inzerát sa tým nemažú.";modal.classList.add("on")}function closePublicInfo(){document.getElementById("infoModal").classList.remove("on")}async function setPublic(id,value){try{const r=await fetch("/api/cars/"+encodeURIComponent(id),{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({is_public:value?1:0})});const x=await r.json().catch(()=>({}));if(!r.ok)throw Error(x.error||("Server vrátil HTTP "+r.status));note(value?"✓ Vozidlo je teraz zobrazené na hlavnej stránke.":"✓ Vozidlo bolo skryté z hlavnej stránky.","ok");await loadCars()}catch(e){note("Zmenu zobrazenia sa nepodarilo uložiť: "+(e?.message||e),"warn")}}
 async function edit(id){
+  const base=(window._adminCars||[]).find(c=>String(c.id)===String(id));
+  if(!base){note("Vozidlo sa v zozname nenašlo. Obnovujem zoznam…","warn");await loadCars();return}
+  current={...base,images:[],equipment:[]};
+  fill(current);
+  document.getElementById("editor").scrollIntoView({behavior:"smooth",block:"start"});
   try{
     const r=await fetch("/api/admin/cars/"+encodeURIComponent(id),{cache:"no-store"});
     const x=await r.json().catch(()=>({}));
-    if(!r.ok||!x.car)throw Error(x.error||("Server vrátil HTTP "+r.status));
-    current={...x.car,images:(x.photos||[]).map(p=>p.url),equipment:x.equipment||[]};
-    fill(current);
-    renderPhotos();
-    document.getElementById("editor")?.scrollIntoView({behavior:"smooth",block:"start"});
+    if(r.ok&&x.car){
+      current={...base,...x.car,images:(x.photos||[]).map(p=>p.url),equipment:x.equipment||[]};
+      fill(current);
+      renderPhotos();
+    }else{
+      renderPhotos();
+      note("Editor je otvorený. Detailné údaje/fotografie sa nepodarilo dočítať: "+(x.error||("HTTP "+r.status)),"warn");
+    }
   }catch(e){
-    note("Vozidlo sa nepodarilo otvoriť na úpravu: "+(e?.message||e),"warn");
+    renderPhotos();
+    note("Editor je otvorený. Detailné údaje/fotografie sa nepodarilo dočítať: "+(e?.message||e),"warn");
   }
 }
 async function ensurePhotoCarSaved(){if(!current?.id)return false;const check=await fetch("/api/cars/"+encodeURIComponent(current.id));if(check.ok)return true;const b={id:current.id,title:v("title"),subtitle:v("subtitle"),year:v("year"),km:v("km"),power:v("power"),range_km:v("range_km"),drive:v("drive"),color:v("color"),price_eur:v("price_eur"),purchase_price_eur:v("purchase_price_gross_eur")||v("purchase_price_net_eur"),purchase_price_net_eur:v("purchase_price_net_eur"),purchase_price_gross_eur:v("purchase_price_gross_eur"),purchase_vat_rate:v("purchase_vat_rate"),is_public:v("is_public")==="0"?0:1,is_recommended:v("is_recommended")==="1"?1:0,status:v("status"),exclusive_equipment:v("exclusive_equipment"),description:v("description"),equipment:v("equipment").split("\n").map(x=>x.trim()).filter(Boolean),source_url:current.source_url||""};if(!b.title)return false;const r=await fetch("/api/cars",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(b)});const x=await r.json();if(!r.ok)throw Error(x.error||"Vozidlo sa nepodarilo uložiť");current.id=x.id||current.id;return true}
