@@ -9,7 +9,7 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "skoda-yeti-ivan-db"
-database_id = "REPLACE_WITH_NEW_D1_DATABASE_ID"
+database_id = "6c9ef1f2-e25d-4eb7-91e5-d5a3b3bd8d53"
 
 [[r2_buckets]]
 binding = "PHOTOS"
