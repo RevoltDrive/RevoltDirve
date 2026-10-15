@@ -1,4 +1,4 @@
-name = "revolt-drive-auto-system"
+name = "skoda-yeti-ivan"
 main = "src/worker.js"
 compatibility_date = "2026-09-18"
 
@@ -8,12 +8,12 @@ binding = "ASSETS"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "revolt-drive-db"
-database_id = "6ae365d8-ce6d-46b9-9222-861f4698c035"
+database_name = "skoda-yeti-ivan-db"
+database_id = "REPLACE_WITH_NEW_D1_DATABASE_ID"
 
 [[r2_buckets]]
 binding = "PHOTOS"
-bucket_name = "revolt-drive-photos"
+bucket_name = "skoda-yeti-ivan-photos"
 
 # Production:
 # - ADMIN_PASSWORD and authentication will be added before public launch.
